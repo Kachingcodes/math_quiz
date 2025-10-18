@@ -353,59 +353,68 @@ export default function MathQuestionsGenerator() {
   };
 
   return (
-    <section className="w-full flex items-center justify-center transition-colors duration-500 bg-gray-100 dark:bg-gray-900 text-black dark:text-white min-h-screen">
-      <button
-        onClick={() => setDarkMode(!darkMode)}
-        className="absolute top-4 right-4 p-2 rounded-full dark:text-amber-400 bg-gray-200 dark:bg-gray-800 text-blue-700"
-      >
-        {darkMode ? <FaSun size={18} /> : <FaMoon size={18} />}
-      </button>
+    <section className="w-full flex items-center justify-center transition-colors p-2 duration-500 bg-gradient-to-br from-green-900 via-gray-800 to-black dark:from-[#0b1a0b] dark:via-[#0f0e0e] dark:to-black text-black dark:text-white min-h-screen relative overflow-hidden">
 
-      <div className="max-w-3xl mx-auto font-[Inter] p-4 space-y-4">
-        <h1 className="text-2xl font-bold mb-4">Math Quiz Questions Generator</h1>
+  {/* Floating Glow */}
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,255,100,0.15),transparent_70%)] pointer-events-none"></div>
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(0,255,100,0.1),transparent_70%)] pointer-events-none"></div>
 
-        <div className="border-2 border-[#060606] dark:border-[#e6e6e6] p-4 rounded-2xl bg-gray-100 dark:bg-black transition-colors duration-500">
-          {!current ? (
-            <div>Loading questions...</div>
-          ) : (
-            <>
-              <div style={{ marginBottom: 12 }}>
-                <strong>Question #{current.id} — {current.topic}</strong>
-              </div>
-              <div style={{ whiteSpace: "pre-wrap", fontSize: 18, marginBottom: 12 }}>{current.prompt}</div>
+  {/* Dark/Light Mode Toggle */}
+  <button
+    onClick={() => setDarkMode(!darkMode)}
+    className="fixed md:absolute top-4 right-4 p-2 rounded-full dark:text-green-400 text-green-900 bg-white/40 dark:bg-black/30 backdrop-blur-md border border-white/30 shadow-lg hover:scale-105 transition-transform"
+  >
+    {darkMode ? <FaSun size={18} /> : <FaMoon size={18} />}
+  </button>
 
-              {showAnswer && (
-                <div style={{ marginTop: 16, borderTop: `1px solid ${darkMode ? "#eee" : "#000"}`}}>
-                  <strong>Answer:</strong>
-                  <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{current.answer}</div>
-                </div>
-              )}
+  {/* Main Glass Container */}
+  <div className="max-w-3xl mx-auto font-[Inter] p-2 md:p-6 space-y-4 bg-white/10 dark:bg-green-900/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_0_30px_rgba(0,255,150,0.1)] transition-all duration-500">
+    <h1 className="text-2xl font-bold mb-4 text-center text-green-200">Math Quiz Questions Generator</h1>
 
-              {showSolution && (
-                <div style={{ marginTop: 16, borderTop: `1px solid ${darkMode ? "#eee" : "#000"}`}}>
-                  <strong>Solution:</strong>
-                  <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{current.solution}</div>
-                </div>
-              )}
-            </>
+    <div className="p-4 rounded-2xl bg-white/20 dark:bg-black/30 border border-white/20 backdrop-blur-md transition-colors duration-500 shadow-inner">
+      {!current ? (
+        <div>Loading questions...</div>
+      ) : (
+        <>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Question #{current.id} — {current.topic}</strong>
+          </div>
+          <div style={{ whiteSpace: "pre-wrap", fontSize: 18, marginBottom: 12 }}>{current.prompt}</div>
+
+          {showAnswer && (
+            <div style={{ marginTop: 16, borderTop: `1px solid ${darkMode ? "#eee" : "#000"}`}}>
+              <strong>Answer:</strong>
+              <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{current.answer}</div>
+            </div>
           )}
-        </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-2 mt-2 w-full">
-          <button onClick={randomQuestion} className="flex py-2 px-4 bg-[#36eb36] hover:bg-[#0eb70e] dark:bg-[#073a07] rounded-xl">
-            Select question
-          </button>
-          <button onClick={showAns} className="py-2 px-4 bg-[#36eb36] hover:bg-green-600 dark:bg-[#073a07] rounded-xl">
-            Show answer
-          </button>
-          <button onClick={showSol} className="py-2 px-4 bg-[#36eb36] hover:bg-green-600 dark:bg-[#073a07] rounded-xl">
-            Show solution
-          </button>
-          <button onClick={regenerate} className="py-2 px-4 bg-[#36eb36] hover:bg-green-600 dark:bg-[#073a07] rounded-xl" title="Regenerate the pool with a new seed">
-            Regenerate 
-          </button>
-        </div>
-      </div>
-    </section>
+          {showSolution && (
+            <div style={{ marginTop: 16, borderTop: `1px solid ${darkMode ? "#eee" : "#000"}`}}>
+              <strong>Solution:</strong>
+              <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{current.solution}</div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+
+    {/* Buttons */}
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-4 w-full">
+      <button onClick={randomQuestion} className="w-full sm:w-auto py-2 px-4 bg-green-500/30 hover:bg-green-500/50 text-white border border-green-400/50 backdrop-blur-md rounded-xl shadow-lg transition-all duration-200">
+        Select question
+      </button>
+      <button onClick={showAns} className="w-full sm:w-auto py-2 px-4 bg-green-500/30 hover:bg-green-500/50 text-white border border-green-400/50 backdrop-blur-md rounded-xl shadow-lg transition-all duration-200">
+        Show answer
+      </button>
+      <button onClick={showSol} className="w-full sm:w-auto py-2 px-4 bg-green-500/30 hover:bg-green-500/50 text-white border border-green-400/50 backdrop-blur-md rounded-xl shadow-lg transition-all duration-200">
+        Show solution
+      </button>
+      <button onClick={regenerate} className="w-full sm:w-auto py-2 px-4 bg-green-500/30 hover:bg-green-500/50 text-white border border-green-400/50 backdrop-blur-md rounded-xl shadow-lg transition-all duration-200" title="Regenerate the pool with a new seed">
+        Regenerate 
+      </button>
+    </div>
+  </div>
+</section>
+
   );
 }
