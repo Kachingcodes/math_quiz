@@ -1,6 +1,15 @@
-"use client";
+yes please - "use client"
 import React, { useEffect, useState } from "react";
 import { FaMoon, FaSun } from "react-icons/fa";
+
+
+type Question = {
+  id: number;
+  prompt: string;
+  answer: string;
+  solution: string;
+  topic: string;
+};
 
 // Small utility RNG so generation is fast and reproducible (optional seed)
 function rng(seed = Date.now()) {
@@ -12,11 +21,11 @@ function rng(seed = Date.now()) {
   };
 }
 
-function randint(rand, a, b) {
+function randint(rand: () => number, a: number, b: number) {
   return a + Math.floor(rand() * (b - a + 1));
 }
 
-function gcd(a, b) {
+function gcd(a: number, b: number) {
   a = Math.abs(a);
   b = Math.abs(b);
   while (b) {
@@ -27,7 +36,7 @@ function gcd(a, b) {
   return a;
 }
 
-function formatFrac(num, den) {
+function formatFrac(num: number, den: number) {
   if (den === 1) return String(num);
   const sign = num * den < 0 ? "-" : "";
   num = Math.abs(num);
@@ -38,48 +47,51 @@ function formatFrac(num, den) {
   return `${sign}${num}/${den}`;
 }
 
-function generateQuadratic(rand, id) {
+function generateQuadratic(rand: () => number, id: number): Question {
+  // ax^2 + bx + c = 0, ensure discriminant is non-negative and not trivial
   let a = randint(rand, 1, 5);
   let b = randint(rand, -10, 10);
   let c = randint(rand, -10, 10);
+  // adjust to get real roots
   let disc = b * b - 4 * a * c;
+  // if negative, tweak c until disc >=0
   let tries = 0;
   while (disc < 0 && tries < 10) {
     c = randint(rand, -10, 10);
     disc = b * b - 4 * a * c;
     tries++;
   }
+  // create nice rational roots if possible
   const sqrtDisc = Math.sqrt(disc);
-  let answer, solution;
+  let answer: string;
+  let solution: string;
   if (Number.isInteger(sqrtDisc)) {
-    const r1 = (-b + sqrtDisc) / (2 * a);
-    const r2 = (-b - sqrtDisc) / (2 * a);
+    const r1 = ((-b + sqrtDisc) / (2 * a));
+    const r2 = ((-b - sqrtDisc) / (2 * a));
     answer = `x = ${r1}, ${r2}`;
-    solution = `Solve ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${
-      c < 0 ? "-" : "+"
-    } ${Math.abs(c)} = 0.\n`;
+    solution = `Solve ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)} = 0.\n`;
     solution += `Discriminant Δ = b^2 - 4ac = ${b}^2 - 4*${a}*${c} = ${disc}.\n`;
     solution += `√Δ = ${sqrtDisc}.\n`;
     solution += `Roots: x = (-b ± √Δ) / (2a) = ${answer}.`;
   } else {
+    // give roots as fractions
+    // compute in fraction form
+    const num1 = -b + Math.round(sqrtDisc);
     answer = `x = ( -${b} ± √${disc} ) / ${2 * a}`;
-    solution = `Solve ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${
-      c < 0 ? "-" : "+"
-    } ${Math.abs(c)} = 0.\n`;
+    solution = `Solve ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)} = 0.\n`;
     solution += `Δ = ${disc} so roots are x = (-b ± √Δ)/(2a) = ${answer}. (Irrational roots)\n`;
   }
   return {
     id,
-    prompt: `Solve for x: ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${
-      c < 0 ? "-" : "+"
-    } ${Math.abs(c)} = 0`,
+    prompt: `Solve for x: ${a}x^2 ${b < 0 ? "-" : "+"} ${Math.abs(b)}x ${c < 0 ? "-" : "+"} ${Math.abs(c)} = 0`,
     answer,
     solution,
     topic: "Quadratic equations",
   };
 }
 
-function generateLinearSystem(rand, id) {
+function generateLinearSystem(rand: () => number, id: number): Question {
+  // 2x2 system
   const a1 = randint(rand, -6, 6) || 1;
   const b1 = randint(rand, -6, 6) || 1;
   const c1 = randint(rand, -12, 12);
@@ -87,7 +99,8 @@ function generateLinearSystem(rand, id) {
   const b2 = randint(rand, -6, 6) || 1;
   const c2 = randint(rand, -12, 12);
   const det = a1 * b2 - a2 * b1;
-  let answer, solution;
+  let answer: string;
+  let solution: string;
   if (det === 0) {
     answer = "No unique solution (parallel or infinite solutions).";
     solution = `System: ${a1}x ${b1 < 0 ? "-" : "+"} ${Math.abs(b1)}y = ${c1};\n`;
@@ -105,18 +118,19 @@ function generateLinearSystem(rand, id) {
   }
   return {
     id,
-    prompt: `Solve the system: ${a1}x ${b1 < 0 ? "-" : "+"} ${Math.abs(b1)}y = ${c1};\n${a2}x ${
-      b2 < 0 ? "-" : "+"
-    } ${Math.abs(b2)}y = ${c2}`,
+    prompt: `Solve the system: ${a1}x ${b1 < 0 ? "-" : "+"} ${Math.abs(b1)}y = ${c1};\n${a2}x ${b2 < 0 ? "-" : "+"} ${Math.abs(b2)}y = ${c2}`,
     answer,
     solution,
     topic: "Linear system (2x2)",
   };
 }
 
-function generateDerivative(rand, id) {
+function generateDerivative(rand: () => number, id: number): Question {
+  // derivative of polynomial at a point
+  
   const degree = randint(rand, 1, 4);
   const coeffs = Array.from({ length: degree + 1 }, () => randint(rand, -5, 8));
+  // ensure highest coefficient not zero
   if (coeffs[0] === 0) coeffs[0] = randint(rand, 1, 8);
   const x0 = randint(rand, -5, 5);
   const expr = coeffs
@@ -133,6 +147,7 @@ function generateDerivative(rand, id) {
     .join(" ")
     .replace(/^\+ /, "");
 
+  // derivative
   const derivCoeffs = coeffs.map((c, i) => c * (degree - i)).slice(0, -1);
   const derivExpr = derivCoeffs
     .map((c, i) => {
@@ -148,12 +163,13 @@ function generateDerivative(rand, id) {
     .join(" ")
     .replace(/^\+ /, "");
 
+  // evaluate derivative at x0
   const derivVal = derivCoeffs.reduce((acc, c, i) => {
     const pow = derivCoeffs.length - 1 - i;
     return acc + c * Math.pow(x0, pow);
   }, 0);
 
-  const answer = `f'(${x0}) = ${derivVal}`;
+  const answer = `f'( ${x0} ) = ${derivVal}`;
   let solution = `Given f(x) = ${expr}.\n`;
   solution += `f'(x) = ${derivExpr}.\n`;
   solution += `Evaluate at x = ${x0}: f'(${x0}) = ${derivVal}.`;
@@ -167,7 +183,8 @@ function generateDerivative(rand, id) {
   };
 }
 
-function generateIntegral(rand, id) {
+function generateIntegral(rand: () => number, id: number): Question {
+  // definite integral of simple polynomial from a to b
   const degree = randint(rand, 0, 3);
   const coeffs = Array.from({ length: degree + 1 }, () => randint(rand, -5, 8));
   if (coeffs.every((c) => c === 0)) coeffs[0] = 1;
@@ -187,6 +204,7 @@ function generateIntegral(rand, id) {
     .join(" ")
     .replace(/^\+ /, "");
 
+  // integrate term-wise
   const integralCoeffs = coeffs.map((c, i) => {
     const pow = degree - i;
     return { coeff: c / (pow + 1), pow: pow + 1 };
@@ -205,27 +223,26 @@ function generateIntegral(rand, id) {
     .join(" ")
     .replace(/^\+ /, "");
 
-  const evaluate = (x) =>
+  const evaluate = (x: number) =>
     integralCoeffs.reduce((acc, t) => acc + t.coeff * Math.pow(x, t.pow), 0);
 
   const val = evaluate(b) - evaluate(a);
-  const answer = `∫_${a}^${b} (${expr}) dx = ${Number(val.toFixed(4))}`;
+  const answer = `\u222B_${a}^{${b}} (${expr}) dx = ${Number(val.toFixed(4))}`;
   let solution = `Compute the antiderivative of f(x) = ${expr}.\n`;
   solution += `An antiderivative is F(x) = ${antideriv}.\n`;
-  solution += `Then ∫_${a}^${b} f(x) dx = F(${b}) - F(${a}) = ${Number(
-    evaluate(b).toFixed(4)
-  )} - ${Number(evaluate(a).toFixed(4))} = ${Number(val.toFixed(4))}.`;
+  solution += `Then \u222B_${a}^{${b}} f(x) dx = F(${b}) - F(${a}) = ${Number(evaluate(b).toFixed(4))} - ${Number(evaluate(a).toFixed(4))} = ${Number(val.toFixed(4))}.`;
 
   return {
     id,
-    prompt: `Compute the definite integral: ∫_${a}^${b} (${expr}) dx`,
+    prompt: `Compute the definite integral: \u222B_${a}^{${b}} (${expr}) \; dx`,
     answer,
     solution,
     topic: "Integration (definite)",
   };
 }
 
-function generateSequenceQuestion(rand, id) {
+function generateSequenceQuestion(rand: () => number, id: number): Question {
+  // arithmetic or geometric sequence - find nth term or sum
   const isArithmetic = rand() > 0.5;
   if (isArithmetic) {
     const a1 = randint(rand, -5, 8);
@@ -233,7 +250,8 @@ function generateSequenceQuestion(rand, id) {
     const n = randint(rand, 5, 12);
     const an = a1 + (n - 1) * d;
     const answer = `a_${n} = ${an}`;
-    const solution = `Arithmetic sequence with a1 = ${a1}, d = ${d}. Formula a_n = a1 + (n-1)d.\nSo a_${n} = ${a1} + (${n}-1)*${d} = ${an}.`;
+    const solution = `Arithmetic sequence with a1 = ${a1}, d = ${d}. Formula a_n = a1 + (n-1)d.\n` +
+      `So a_${n} = ${a1} + (${n}-1)*${d} = ${an}.`;
     return {
       id,
       prompt: `Given an arithmetic sequence with first term ${a1} and common difference ${d}, find the ${n}th term.`,
@@ -247,7 +265,8 @@ function generateSequenceQuestion(rand, id) {
     const n = randint(rand, 3, 8);
     const an = a1 * Math.pow(r, n - 1);
     const answer = `a_${n} = ${an}`;
-    const solution = `Geometric sequence with a1 = ${a1}, r = ${r}. Formula a_n = a1 * r^(n-1).\nSo a_${n} = ${a1}*${r}^${n - 1} = ${an}.`;
+    const solution = `Geometric sequence with a1 = ${a1}, r = ${r}. Formula a_n = a1 * r^(n-1).\n` +
+      `So a_${n} = ${a1}*${r}^${n - 1} = ${an}.`;
     return {
       id,
       prompt: `Given a geometric sequence with first term ${a1} and ratio ${r}, find the ${n}th term.`,
@@ -258,17 +277,18 @@ function generateSequenceQuestion(rand, id) {
   }
 }
 
-function generateLogExp(rand, id) {
+function generateLogExp(rand: () => number, id: number): Question {
+  // solve simple log or exponential equation
   const isLog = rand() > 0.5;
   if (isLog) {
     const a = randint(rand, 2, 6);
     const b = randint(rand, 1, 6);
     const x = randint(rand, 1, 6);
+    // equation: log_a (b x) = c  (we'll craft so solution is rational)
     const c = Math.log(b * x) / Math.log(a);
     const answer = `x = ${x}`;
-    const solution = `Solve log_${a}(${b}x) = ${Number(c.toFixed(4))}.\nRewrite: ${b}x = ${a}^${Number(
-      c.toFixed(4)
-    )}. Hence x = ${(Math.pow(a, c) / b).toFixed(4)} = ${x}.`;
+    const solution = `Solve log_${a}(${b}x) = ${Number(c.toFixed(4))}.\n` +
+      `Rewrite: ${b}x = ${a}^${Number(c.toFixed(4))}. Hence x = ${(Math.pow(a, c) / b).toFixed(4)} = ${x}.`;
     return {
       id,
       prompt: `Solve for x: log_${a}(${b}x) = ${Number(c.toFixed(4))}`,
@@ -292,7 +312,7 @@ function generateLogExp(rand, id) {
   }
 }
 
-function generateQuestionOfType(rand, id) {
+function generateQuestionOfType(rand: () => number, id: number): Question {
   const t = rand();
   if (t < 0.18) return generateQuadratic(rand, id);
   if (t < 0.34) return generateLinearSystem(rand, id);
@@ -302,14 +322,16 @@ function generateQuestionOfType(rand, id) {
   return generateLogExp(rand, id);
 }
 
-export default function MathQuestionsGenerator() {
-  const [seed, setSeed] = useState(() => Date.now() % 1000000);
-  const [questions, setQuestions] = useState(null);
-  const [current, setCurrent] = useState(null);
+export default function MathQuestionsGenerator(): JSX.Element {
+  // Use a seeded RNG for reproducibility (optional)
+  const [seed, setSeed] = useState<number>(() => Date.now() % 1000000);
+  const [questions, setQuestions] = useState<Question[] | null>(null);
+  const [current, setCurrent] = useState<Question | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
+  // Load theme from localStorage (runs once)
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
@@ -318,6 +340,7 @@ export default function MathQuestionsGenerator() {
     }
   }, []);
 
+  // Watch for changes
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -328,14 +351,15 @@ export default function MathQuestionsGenerator() {
     }
   }, [darkMode]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      const randGen = rng(seed);
-      const out = Array.from({ length: 2000 }, (_, i) => generateQuestionOfType(randGen, i + 1));
-      setQuestions(out);
-      setCurrent(out[0]);
-    }, 100);
-  }, [seed]);
+  // generate once
+useEffect(() => {
+  setTimeout(() => {
+    const randGen = rng(seed);
+    const out: Question[] = Array.from({ length: 2000 }, (_, i) => generateQuestionOfType(randGen, i + 1));
+    setQuestions(out);
+    setCurrent(out[0]);
+  }, 100);
+}, [seed]);
 
   const randomQuestion = () => {
     if (!questions || questions.length === 0) return;
@@ -353,80 +377,66 @@ export default function MathQuestionsGenerator() {
   };
 
   return (
-    <section className="w-full flex items-start justify-center transition-colors p-2 py-10 duration-500 bg-gradient-to-br from-green-900 via-gray-800 to-black dark:from-[#0b1a0b] dark:via-[#0f0e0e] dark:to-black text-black dark:text-white min-h-screen relative overflow-y-auto">
+    <section className="w-full flex items-center justify-center transition-colors duration-500 bg-gray-100 dark:bg-gray-900 text-black dark:text-white min-h-screen">
 
-    {/* Floating Glow */}
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,255,100,0.15),transparent_70%)] pointer-events-none"></div>
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(0,255,100,0.1),transparent_70%)] pointer-events-none"></div>
+      <button
+        onClick={() => setDarkMode(!darkMode)}
+        className="absolute top-4 right-4 p-2 rounded-full dark:text-amber-400 bg-gray-200 dark:bg-gray-800 text-blue-700"
+      >
+        {darkMode ? <FaSun size={18}/> : <FaMoon size={18}/>}
+      </button>
 
-    {/* Dark/Light Mode Toggle */}
-    <button
-      onClick={() => setDarkMode(!darkMode)}
-      className="fixed md:absolute top-4 right-4 p-2 rounded-full dark:text-green-400 text-green-900 bg-white/40 dark:bg-black/30 backdrop-blur-md border border-white/30 shadow-lg hover:scale-105 transition-transform z-50"
-    >
-      {darkMode ? <FaSun size={18} /> : <FaMoon size={18} />}
-    </button>
-
-    {/* Main Glass Container */}
-    <div className="relative z-10 max-w-3xl mx-auto font-[Inter] p-2 md:p-4 space-y-4 bg-white/10 dark:bg-green-900/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_0_30px_rgba(0,255,150,0.1)] transition-all duration-500">
-      <h1 className="text-2xl font-bold mb-4 text-center text-green-200">Math Quiz Questions Generator</h1>
-
-      <div className="p-4 rounded-2xl bg-white/20 dark:bg-black/30 border border-white/20 backdrop-blur-md transition-colors duration-500 shadow-inner">
-        {!current ? (
-          <div>Loading questions...</div>
-        ) : (
-          <>
-            <div style={{ marginBottom: 12 }}>
-              <strong>Question #{current.id} — {current.topic}</strong>
-            </div>
-            <div style={{ whiteSpace: "pre-wrap", fontSize: 18, marginBottom: 12 }}>{current.prompt}</div>
-
-            {showAnswer && (
-              <div style={{ marginTop: 16, borderTop: `1px solid ${darkMode ? "#eee" : "#000"}` }}>
-                <strong>Answer:</strong>
-                <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{current.answer}</div>
+      <div className="max-w-3xl mx-auto font-[Inter] p-4 space-y-4">
+        <h1 className="text-2xl font-bold mb-4">Math Quiz Questions Generator</h1>
+        
+        <div className="border-2 border-[#060606] dark:border-[#e6e6e6] p-4 rounded-2xl bg-gray-100 dark:bg-black transition-colors duration-500">
+          {!current ? (
+            <div>Loading questions...</div>
+          ) : (
+            <>
+              <div style={{ marginBottom: 12 }}>
+                <strong>Question #{current.id} — {current.topic}</strong>
               </div>
-            )}
+              <div style={{ whiteSpace: "pre-wrap", fontSize: 18, marginBottom: 12 }}>{current.prompt}</div>
 
-            {showSolution && (
-              <div style={{ marginTop: 16, borderTop: `1px solid ${darkMode ? "#eee" : "#000"}` }}>
-                <strong>Solution:</strong>
-                <div
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    marginTop: 6,
-                    maxHeight: "300px",
-                    overflowY: "auto",
-                    paddingRight: "6px",
-                  }}
-                  className="scrollbar-thin scrollbar-thumb-green-500/40 scrollbar-track-transparent hover:scrollbar-thumb-green-400/60 transition-all"
-                >
-                  {current.solution}
+              {showAnswer && (
+                <div style={{ marginTop: 16, borderTop: `1px solid ${darkMode ? "#eee" : "#000"}`}}>
+                  <strong>Answer:</strong>
+                  <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{current.answer}</div>
                 </div>
-              </div>
-            )}
-          </>
-        )}
+              )}
+
+              {showSolution && (
+                <div style={{ marginTop: 16, borderTop: `1px solid ${darkMode ? "#eee" : "#000"}`}}>
+                  <strong>Solution:</strong>
+                  <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{current.solution}</div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-2 mt-2 w-full">
+          <button onClick={randomQuestion} className="flex py-2 px-4 bg-[#36eb36] hover:bg-[#0eb70e] dark:bg-[#073a07] rounded-xl">
+            Select question
+          </button>
+          <button onClick={showAns} className="py-2 px-4 bg-[#36eb36] hover:bg-green-600 dark:bg-[#073a07] rounded-xl">
+            Show answer
+          </button>
+          <button onClick={showSol} className="py-2 px-4 bg-[#36eb36] hover:bg-green-600 dark:bg-[#073a07] rounded-xl">
+            Show solution
+          </button>
+          <button onClick={regenerate} className="py-2 px-4 bg-[#36eb36] hover:bg-green-600 dark:bg-[#073a07] rounded-xl" title="Regenerate the pool with a new seed">
+            Regenerate 
+          </button>
+        </div>
       </div>
-
-      {/* Buttons */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-4 w-full">
-        <button onClick={randomQuestion} className="w-full sm:w-auto py-2 px-4 bg-green-500/30 hover:bg-green-500/50 text-white border border-green-400/50 backdrop-blur-md rounded-xl shadow-lg transition-all duration-200">
-          Select question
-        </button>
-        <button onClick={showAns} className="w-full sm:w-auto py-2 px-4 bg-green-500/30 hover:bg-green-500/50 text-white border border-green-400/50 backdrop-blur-md rounded-xl shadow-lg transition-all duration-200">
-          Show answer
-        </button>
-        <button onClick={showSol} className="w-full sm:w-auto py-2 px-4 bg-green-500/30 hover:bg-green-500/50 text-white border border-green-400/50 backdrop-blur-md rounded-xl shadow-lg transition-all duration-200">
-          Show solution
-        </button>
-        <button onClick={regenerate} className="w-full sm:w-auto py-2 px-4 bg-green-500/30 hover:bg-green-500/50 text-white border border-green-400/50 backdrop-blur-md rounded-xl shadow-lg transition-all duration-200" title="Regenerate the pool with a new seed">
-          Regenerate 
-        </button>
-      </div>
-    </div>
-  </section>
-
-
+    </section>
   );
 }
+
+
+
+ 
+
+
